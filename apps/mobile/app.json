@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "Entre Contas",
+    "slug": "entre-contas-casal",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": { "supportsTablet": true },
+    "android": { "package": "local.entrecontas.casal" },
+    "plugins": ["expo-secure-store"]
+  }
+}

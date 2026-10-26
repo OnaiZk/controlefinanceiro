@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": { "incremental": true, "plugins": [{ "name": "next" }] },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "../api/src/node-argon2.d.ts"
+  ],
+  "exclude": ["node_modules"]
+}

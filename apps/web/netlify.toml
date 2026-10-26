@@ -1,0 +1,14 @@
+[build]
+  command = "pnpm build"
+  publish = "apps/web/.next"
+
+[build.environment]
+  NODE_VERSION = "24"
+  NEXT_TELEMETRY_DISABLED = "1"
+  PNPM_FLAGS = "--no-frozen-lockfile --filter entre-contas --filter @finance/web --filter @finance/api --filter @finance/shared"
+
+# Base directory: repositório raiz. Package directory: apps/web (na interface Netlify).
+# O adapter Next.js atual é detectado pelo Netlify. Não usar Netlify Drop:
+# os endpoints de login e persistência exigem funções de servidor.
+# Segredos e AWS_LAMBDA_JS_RUNTIME=nodejs24.x devem ser configurados no painel,
+# nunca neste arquivo. Veja docs/DEPLOYMENT.md.
