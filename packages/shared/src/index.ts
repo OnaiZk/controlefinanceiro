@@ -527,6 +527,7 @@ export interface Snapshot {
   view: View;
   month: string;
   mode: 'local' | 'convex';
+  demoEnabled?: boolean;
   accounts: (Account & { currentBalanceCents: number })[];
   cards: (Card & {
     usedCents: number;

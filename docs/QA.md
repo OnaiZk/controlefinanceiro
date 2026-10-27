@@ -1,5 +1,31 @@
 # Verificação da entrega
 
+## Atualização — 2026-10-26
+
+Esta seção substitui as limitações antigas sobre ausência de lockfile, dependências emprestadas, falta de inspeção no navegador e exclusão do mobile da checagem de tipos. Os resultados de 2026-10-25 permanecem abaixo como histórico.
+
+| Verificação | Resultado |
+| --- | --- |
+| Instalação limpa | pnpm 10.30.0, `pnpm-lock.yaml`, `install --frozen-lockfile` aprovado em cópia sem dependências prévias; 619 pacotes instalados. |
+| Diretório de uso | Dependências antigas preservadas em `.local/node_modules-before-pnpm-20261026`; nova instalação pelo mesmo lockfile, sem referências a outros projetos. |
+| ESLint | `pnpm lint`, aprovado. |
+| TypeScript | `pnpm typecheck`, aprovado; agora inclui uma checagem própria de `apps/mobile`. |
+| Vitest | `pnpm test`: 85 testes aprovados em 11 arquivos após a correção do deploy. Inclui índices Convex, certificados do CLI, bloqueio de mock em base real e backup/restauração cifrados. |
+| Convex Cloud (Development) | `npm run convex:deploy` aprovado em `neat-perch-479`: schema validado, índices criados e funções publicadas. Leitura autenticada de `finance:execute` aprovada e leitura sem segredo correto recusada; nenhum registro criado nessa verificação. |
+| Produção | `pnpm build`, compilação Next.js e geração de rotas aprovadas com as dependências limpas. |
+| Chrome real | `test:browser`: 20 grupos de fluxos aprovados, sem exceções de JavaScript; larguras 1440 e 390 px. [Relatório sanitizado](qa/browser-results-2026-10-26.json). |
+| Base local | Dados demonstrativos removidos, acessos e nove categorias preservados, sem registros financeiros. Backup cifrado verificado antes da substituição. |
+
+Os cliques reais exercitaram login dos dois perfis, erro de senha, mostrar/ocultar senha, modos e clique repetido, meses/gráfico por teclado, tema, privacidade, erro de consulta e nova tentativa, abrir/fechar/cancelar/Escape, contas e edição, pendências/realização, edição/categoria/regra, receitas/transferências/despesas compartilhadas, filtros, download CSV, importação/reimportação/aprovação/rejeição/reabertura, estorno/exclusão e cancelamento da confirmação, orçamento, recorrência/pagamento, janela de vencimentos, dispensar alerta, acerto do casal via formulário, meta/reserva, investimento/posição/CDI, cartão/compra/fatura/parcelamento, configuração/erro seguro/desconexão bancária, navegação móvel, logout e isolamento KET. O relatório descreve os grupos; isso não significa cobertura de todas as combinações ou garantia de ausência de defeitos.
+
+Correções verificadas: clicar no modo já selecionado deixava a página presa no carregamento; receita compartilhada enviava pagador vazio; o mock local podia inserir movimentos em base real; indicador de desenvolvimento interceptava o botão Início na largura móvel; aviso anterior podia permanecer após troca de perfil. A tipagem genérica do WebView foi corrigida para as dependências instaladas. As alterações anteriores do cliente Expo foram preservadas.
+
+As capturas de página vazia e o relatório bruto ficam na pasta ignorada `.local/clean-install/.local/browser-<id>/`. A inspeção das capturas confirmou estado vazio, sem valores fictícios e sem transbordamento horizontal na largura testada. Os movimentos do roteiro ficam exclusivamente na sua própria base cifrada de teste. Sessões e auditoria de acessos legítimos posteriores à limpeza não são dados financeiros fictícios.
+
+**Ainda não comprovado:** deployment Production do Convex, fluxos financeiros completos na nuvem, Netlify, integração bancária real, PWA instalada por HTTPS, execução em celular físico/Expo Go e recuperação de backup hospedado. A publicação e a fronteira de leitura do Convex foram verificadas somente no deployment Development indicado acima. O teste do botão de consulta bancária cobre a apresentação de erro seguro, sem conectar bancos reais. O consentimento e a sincronização real continuam pendentes.
+
+## Histórico — 2026-10-25
+
 Data: 2026-10-25. Ambiente Windows, Node 24.16.0. Esta página distingue testes executados de integrações ainda pendentes.
 
 ## Executado com sucesso
@@ -36,6 +62,6 @@ O smoke HTTP verificou autenticação de CAS/KET, cookie sem JWT no corpo, rejei
 
 ## Roteiro de teste do usuário
 
-Abra `http://localhost:3000` com o servidor iniciado e use dados demonstrativos. Entre nos dois perfis; alterne as cinco áreas e os três escopos. Teste lançamento, edição, pendência, transferência, parcela, pagamento de fatura, orçamento, rateio/acerto, meta e avaliação de investimento. Importe `examples/extrato-demo.csv` duas vezes, revise e confirme o saldo. Faça o mesmo no celular após publicar, verificando contraste, tema escuro, ocultação de valores, tabelas, modais, exportação e retorno de erro. Não use o estado demonstrativo como base real.
+Para repetir os testes fictícios, use `pnpm test:browser`, que cria base e acessos isolados. Não importe os exemplos na base pessoal. Depois de publicar com `SEED_DEMO_DATA=false`, siga [REAL-DATA.md](REAL-DATA.md) e teste no celular os dois perfis, cinco áreas, três escopos, contraste, tema escuro, ocultação de valores, tabelas, modais, exportação e retorno de erro. Confira saldos com o banco e repita com o computador desligado.
 
 O arquivo `artifacts/entre-contas-source.zip` é a entrega de fontes; `.env.local`, banco local, dependências e artefatos de build são excluídos. Ele não é uma publicação funcional no Netlify Drop.

@@ -224,7 +224,9 @@ export default function FinanceForm({
             ...(id ? { id } : {}),
             data: {
               ownerScope: get('ownerScope'),
-              ...(scope === 'COUPLE' ? { paidByUserId: get('paidByUserId') } : {}),
+              ...(scope === 'COUPLE' && txType === 'EXPENSE'
+                ? { paidByUserId: get('paidByUserId') }
+                : {}),
               ...(source === 'card' && txType === 'EXPENSE'
                 ? { cardId: get('cardId') }
                 : { accountId: get('accountId') }),
@@ -238,7 +240,10 @@ export default function FinanceForm({
               occurredAt: get('occurredAt'),
               ...(get('dueDate') ? { dueDate: get('dueDate') } : {}),
               status: get('status'),
-              casShareBps: scope === 'COUPLE' ? Math.round(integer('casPercent') * 100) : 5000,
+              casShareBps:
+                scope === 'COUPLE' && txType === 'EXPENSE'
+                  ? Math.round(integer('casPercent') * 100)
+                  : 5000,
               installments: source === 'card' ? integer('installments') : 1,
             },
           };
@@ -332,7 +337,11 @@ export default function FinanceForm({
           };
           break;
         case 'settle':
-          command = { kind: 'settle', monthKey: data.month, amountCents: money() };
+          command = {
+            kind: 'settle',
+            monthKey: data.month,
+            amountCents: money(),
+          };
           break;
         case 'payInvoice':
           command = {

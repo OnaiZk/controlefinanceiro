@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { createElement, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   BackHandler,
@@ -17,6 +17,25 @@ import * as SecureStore from 'expo-secure-store';
 import { StatusBar } from 'expo-status-bar';
 
 const URL_KEY = 'entre-contas-web-origin';
+interface WebStorageLike {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+}
+async function readSavedUrl(): Promise<string | null> {
+  if (Platform.OS === 'web') {
+    const storage = (globalThis as { localStorage?: WebStorageLike }).localStorage;
+    return storage ? storage.getItem(URL_KEY) : null;
+  }
+  return SecureStore.getItemAsync(URL_KEY);
+}
+async function saveUrl(url: string): Promise<void> {
+  if (Platform.OS === 'web') {
+    const storage = (globalThis as { localStorage?: WebStorageLike }).localStorage;
+    storage?.setItem(URL_KEY, url);
+    return;
+  }
+  await SecureStore.setItemAsync(URL_KEY, url);
+}
 function validOrigin(value: string): string {
   const url = new URL(value.trim());
   const development =
@@ -42,10 +61,11 @@ export default function App() {
     [booting, setBooting] = useState(true),
     [loading, setLoading] = useState(false),
     [error, setError] = useState(''),
-    [canGoBack, setCanGoBack] = useState(false);
-  const web = useRef<WebView>(null);
+    [canGoBack, setCanGoBack] = useState(false),
+    [reloadKey, setReloadKey] = useState(0);
+  const web = useRef<WebView<object>>(null);
   useEffect(() => {
-    SecureStore.getItemAsync(URL_KEY)
+    readSavedUrl()
       .then((saved) => {
         if (saved) {
           setInput(saved);
@@ -60,6 +80,7 @@ export default function App() {
       .finally(() => setBooting(false));
   }, []);
   useEffect(() => {
+    if (Platform.OS === 'web') return;
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
       if (canGoBack) {
         web.current?.goBack();
@@ -73,7 +94,7 @@ export default function App() {
     setError('');
     try {
       const url = validOrigin(input);
-      await SecureStore.setItemAsync(URL_KEY, url);
+      await saveUrl(url);
       setOrigin(url);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Endereço inválido.');
@@ -104,7 +125,8 @@ export default function App() {
                   accessibilityLabel="Recarregar página"
                   onPress={() => {
                     setError('');
-                    web.current?.reload();
+                    if (Platform.OS === 'web') setReloadKey((k) => k + 1);
+                    else web.current?.reload();
                   }}
                   style={styles.smallButton}
                 >
@@ -124,75 +146,85 @@ export default function App() {
               </View>
             </View>
             {loading && <ActivityIndicator color="#1e4d3b" style={styles.spinner} />}
-            <WebView
-              ref={web}
-              source={{ uri: origin }}
-              style={styles.web}
-              originWhitelist={[origin]}
-              onShouldStartLoadWithRequest={(request) =>
-                request.url === 'about:blank' || request.url.startsWith(origin + '/')
-              }
-              javaScriptEnabled
-              domStorageEnabled
-              cacheEnabled={false}
-              incognito
-              sharedCookiesEnabled={false}
-              thirdPartyCookiesEnabled={false}
-              mixedContentMode="never"
-              allowFileAccess={false}
-              setSupportMultipleWindows={false}
-              onLoadStart={() => setLoading(true)}
-              onLoadEnd={() => setLoading(false)}
-              onNavigationStateChange={(state) => setCanGoBack(state.canGoBack)}
-              onError={() => {
-                setLoading(false);
-                setError('Sem conexão com o site. Suas alterações não foram enviadas.');
-              }}
-              onHttpError={(event) => {
-                if (event.nativeEvent.statusCode >= 500)
-                  setError('O servidor está indisponível. Tente novamente.');
-              }}
-              onMessage={(event) => {
-                if (!event.nativeEvent.url.startsWith(origin + '/')) return;
-                try {
-                  const payload: unknown = JSON.parse(event.nativeEvent.data);
-                  if (typeof payload !== 'object' || payload === null) return;
-                  const p = payload as Record<string, unknown>;
-                  if (
-                    p.type === 'export-csv' &&
-                    typeof p.csv === 'string' &&
-                    p.csv.length < 2_500_000 &&
-                    typeof p.filename === 'string' &&
-                    /^entre-contas-[a-z]+-\d{4}-\d{2}\.csv$/.test(p.filename)
-                  )
-                    void Share.share({ message: p.csv, title: p.filename });
-                } catch {
-                  /* Ignore messages that are not explicit export requests. */
+            {Platform.OS === 'web' ? (
+              createElement('iframe', {
+                key: reloadKey,
+                src: origin,
+                title: 'Entre Contas',
+                style: { flex: 1, border: 'none', width: '100%', height: '100%' },
+              })
+            ) : (
+              <WebView<object>
+                ref={web}
+                source={{ uri: origin }}
+                style={styles.web}
+                originWhitelist={[origin]}
+                onShouldStartLoadWithRequest={(request) =>
+                  request.url === 'about:blank' || request.url.startsWith(origin + '/')
                 }
-              }}
-              renderError={() => (
-                <View style={styles.loading}>
-                  <Text style={styles.title}>Uma pausa na conexão.</Text>
-                  <Text style={styles.note}>Confira sua internet e o endereço do site.</Text>
-                  <Pressable
-                    style={styles.button}
-                    onPress={() => {
-                      setError('');
-                      web.current?.reload();
-                    }}
-                  >
-                    <Text style={styles.buttonText}>Tentar novamente</Text>
-                  </Pressable>
-                </View>
-              )}
-            />
+                javaScriptEnabled
+                domStorageEnabled
+                cacheEnabled={false}
+                incognito
+                sharedCookiesEnabled={false}
+                thirdPartyCookiesEnabled={false}
+                mixedContentMode="never"
+                allowFileAccess={false}
+                setSupportMultipleWindows={false}
+                onLoadStart={() => setLoading(true)}
+                onLoadEnd={() => setLoading(false)}
+                onNavigationStateChange={(state) => setCanGoBack(state.canGoBack)}
+                onError={() => {
+                  setLoading(false);
+                  setError('Sem conexão com o site. Suas alterações não foram enviadas.');
+                }}
+                onHttpError={(event) => {
+                  if (event.nativeEvent.statusCode >= 500)
+                    setError('O servidor está indisponível. Tente novamente.');
+                }}
+                onMessage={(event) => {
+                  if (!event.nativeEvent.url.startsWith(origin + '/')) return;
+                  try {
+                    const payload: unknown = JSON.parse(event.nativeEvent.data);
+                    if (typeof payload !== 'object' || payload === null) return;
+                    const p = payload as Record<string, unknown>;
+                    if (
+                      p.type === 'export-csv' &&
+                      typeof p.csv === 'string' &&
+                      p.csv.length < 2_500_000 &&
+                      typeof p.filename === 'string' &&
+                      /^entre-contas-[a-z]+-\d{4}-\d{2}\.csv$/.test(p.filename)
+                    )
+                      void Share.share({ message: p.csv, title: p.filename });
+                  } catch {
+                    /* Ignore messages that are not explicit export requests. */
+                  }
+                }}
+                renderError={() => (
+                  <View style={styles.loading}>
+                    <Text style={styles.title}>Uma pausa na conexão.</Text>
+                    <Text style={styles.note}>Confira sua internet e o endereço do site.</Text>
+                    <Pressable
+                      style={styles.button}
+                      onPress={() => {
+                        setError('');
+                        web.current?.reload();
+                      }}
+                    >
+                      <Text style={styles.buttonText}>Tentar novamente</Text>
+                    </Pressable>
+                  </View>
+                )}
+              />
+            )}
             {error ? (
               <View style={styles.errorBanner}>
                 <Text style={styles.errorText}>{error}</Text>
                 <Pressable
                   onPress={() => {
                     setError('');
-                    web.current?.reload();
+                    if (Platform.OS === 'web') setReloadKey((k) => k + 1);
+                    else web.current?.reload();
                   }}
                 >
                   <Text style={styles.link}>Tentar novamente</Text>

@@ -23,7 +23,7 @@ export default {
   keepProcessEnv: true,
   resolve: { preserveSymlinks: true },
   test: {
-    include: ['tests/**/*.test.ts'],
+    include: ['tests/**/*.test.{ts,mjs}'],
     pool: 'threads',
     fileParallelism: false,
     testTimeout: 20000,

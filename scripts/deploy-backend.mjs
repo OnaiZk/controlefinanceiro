@@ -20,7 +20,7 @@ async function run(args, input) {
   return new Promise((resolvePromise, reject) => {
     const child = spawn(
       process.execPath,
-      [resolve(root, 'node_modules/convex/bin/main.js'), ...args],
+      ['--use-system-ca', resolve(root, 'node_modules/convex/bin/main.js'), ...args],
       { cwd: root, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true, env: process.env },
     );
     let output = '';
@@ -36,7 +36,7 @@ async function run(args, input) {
         ),
       ),
     );
-    child.on('exit', (code) => {
+    child.on('close', (code) => {
       for (const key of [
         'BACKEND_BRIDGE_SECRET',
         'CONVEX_DEPLOY_KEY',
@@ -47,6 +47,10 @@ async function run(args, input) {
       ])
         if (process.env[key]) output = output.replaceAll(process.env[key], '[segredo removido]');
       process.stdout.write(output);
+      if (code !== 0 && /self.signed certificate|certificate chain|UNABLE_TO_VERIFY_LEAF_SIGNATURE|UNABLE_TO_GET_ISSUER_CERT_LOCALLY/i.test(output))
+        console.error(
+          'Falha de confiança TLS. Os certificados do sistema já estão habilitados. Se sua rede usa inspeção HTTPS, obtenha a CA oficial com a equipe de TI e configure NODE_EXTRA_CA_CERTS com o caminho do arquivo PEM em .env.local. Não desative a validação TLS. Consulte docs/DEPLOYMENT.md.',
+        );
       if (code === 0) resolvePromise();
       else
         reject(

@@ -2,6 +2,7 @@
 const config = {
   poweredByHeader: false,
   reactStrictMode: true,
+  devIndicators: false,
   outputFileTracingRoot: new URL('../../', import.meta.url).pathname.replace(/^\/(\w:)/, '$1'),
   experimental: { externalDir: true, workerThreads: true, cpus: 1, webpackBuildWorker: false },
   async headers() {

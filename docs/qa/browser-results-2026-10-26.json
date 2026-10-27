@@ -1,0 +1,27 @@
+{
+  "checks": [
+    "mostrar/ocultar senha e erro de login",
+    "login CAS em base vazia sem demonstração",
+    "três modos e clique repetido no modo atual",
+    "mês anterior, próximo, seletor e gráfico por teclado",
+    "tema claro/escuro e privacidade de valores",
+    "erro de consulta visível e botão Tentar novamente",
+    "abrir, cancelar, fechar e Escape nos formulários",
+    "cadastrar/editar contas e recusar simulação no servidor",
+    "lançamento pendente, realização, edição e categoria aprendida",
+    "receita, transferência e receita/despesa compartilhadas",
+    "busca e filtros de situação/categoria",
+    "exportação CSV e fechar mensagem",
+    "arquivo CSV, aprovar/reprovar/reabrir revisão e deduplicação",
+    "cancelar/confirmar estorno e excluir lançamento",
+    "criar/ajustar orçamento, recorrência, pagamento, janela e dispensar alerta",
+    "espaço do casal, acerto e criar/atualizar meta",
+    "cadastrar/atualizar investimento e simulação CDI",
+    "cadastrar cartão, compra, quitar fatura e parcelamento",
+    "configurar banco, apresentar erro de configuração segura e desconectar",
+    "navegação em largura móvel, configurações, logout, login KET e isolamento"
+  ],
+  "pageErrors": [],
+  "realProviderTested": false,
+  "realDeviceTested": false
+}

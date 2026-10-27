@@ -169,6 +169,6 @@ export default defineSchema({
     tokenHash: v.string(),
     expiresAt: v.number(),
     createdAt: v.number(),
-  }).index('by_id', ['id']),
+  }).index('by_session_id', ['id']),
   loginThrottles: defineTable({ id, failures: v.number(), resetAt: v.number() }),
 });

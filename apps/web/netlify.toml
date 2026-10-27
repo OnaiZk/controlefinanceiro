@@ -5,7 +5,7 @@
 [build.environment]
   NODE_VERSION = "24"
   NEXT_TELEMETRY_DISABLED = "1"
-  PNPM_FLAGS = "--no-frozen-lockfile --filter entre-contas --filter @finance/web --filter @finance/api --filter @finance/shared"
+  PNPM_FLAGS = "--frozen-lockfile --filter entre-contas --filter @finance/web --filter @finance/api --filter @finance/shared"
 
 # Base directory: repositório raiz. Package directory: apps/web (na interface Netlify).
 # O adapter Next.js atual é detectado pelo Netlify. Não usar Netlify Drop:

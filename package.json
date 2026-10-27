@@ -17,9 +17,10 @@
     "build": "node scripts/web.mjs build",
     "start": "node scripts/web.mjs start",
     "lint": "eslint apps packages convex tests scripts --max-warnings=0",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit --project apps/mobile/tsconfig.json",
     "test": "vitest run --config vitest.config.mjs --configLoader native",
     "test:e2e": "node scripts/smoke.mjs",
+    "test:browser": "node scripts/browser-smoke.mjs",
     "setup": "node scripts/setup.mjs",
     "convex:deploy": "node scripts/deploy-backend.mjs",
     "mobile": "npm --prefix apps/mobile start",
@@ -42,6 +43,7 @@
     "eslint": "9.39.5",
     "typescript": "5.9.3",
     "vitest": "4.0.17",
+    "playwright-core": "1.56.1",
     "sharp": "0.35.4"
   }
 }

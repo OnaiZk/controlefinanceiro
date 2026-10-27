@@ -82,19 +82,28 @@ export async function authenticate(token: string | undefined) {
 }
 export async function getSnapshot(token: string | undefined, view: unknown, month: unknown) {
   const { db, state, actor } = await authenticate(token);
-  return snapshot(
-    state,
-    actor,
-    viewSchema.parse(view ?? 'INDIVIDUAL'),
-    monthSchema.parse(month ?? today().slice(0, 7)),
-    db.mode,
-    Date.now(),
-  );
+  return {
+    ...snapshot(
+      state,
+      actor,
+      viewSchema.parse(view ?? 'INDIVIDUAL'),
+      monthSchema.parse(month ?? today().slice(0, 7)),
+      db.mode,
+      Date.now(),
+    ),
+    demoEnabled: process.env.SEED_DEMO_DATA === 'true',
+  };
 }
 export async function mutate(token: string | undefined, raw: unknown) {
   const { db, actor } = await authenticate(token);
   const command = commandSchema.parse(raw);
-  await db.execute({ kind: 'command', actor, command, now: Date.now(), requestId: randomUUID() });
+  await db.execute({
+    kind: 'command',
+    actor,
+    command,
+    now: Date.now(),
+    requestId: randomUUID(),
+  });
   return { ok: true };
 }
 export async function logout(token: string | undefined) {
@@ -144,7 +153,10 @@ export async function configureBank(token: string | undefined, raw: unknown) {
     kind: 'credentials',
     actor,
     encrypted: seal(
-      JSON.stringify({ clientId: input.clientId, clientSecret: input.clientSecret }),
+      JSON.stringify({
+        clientId: input.clientId,
+        clientSecret: input.clientSecret,
+      }),
       secret('ENCRYPTION_KEY'),
       `pluggy:${actor}`,
     ),
@@ -160,22 +172,30 @@ export async function disconnectBank(token: string | undefined) {
 }
 export async function auditExport(token: string | undefined) {
   const { db, actor } = await authenticate(token);
-  await db.execute({ kind: 'auditExport', actor, now: Date.now(), requestId: randomUUID() });
+  await db.execute({
+    kind: 'auditExport',
+    actor,
+    now: Date.now(),
+    requestId: randomUUID(),
+  });
   return { ok: true };
 }
 export async function syncBank(token: string | undefined, raw: unknown) {
   const input = z
-    .object({ accountId: z.string().optional(), provider: z.enum(['MOCK', 'PLUGGY']) })
+    .object({
+      accountId: z.string().optional(),
+      provider: z.enum(['MOCK', 'PLUGGY']),
+    })
     .strict()
     .parse(raw);
   const { db, state, actor } = await authenticate(token);
+  if (input.provider === 'MOCK' && process.env.SEED_DEMO_DATA !== 'true')
+    throw new HttpError(400, 'Sincronização simulada desativada nesta base real.');
   const account = state.accounts.find((a) => a.id === input.accountId);
   if (input.provider === 'MOCK' && (!account || account.ownerScope !== actor))
     throw new HttpError(403, 'Selecione uma conta pessoal para a simulação.');
   let adapter: MockBankSyncAdapter | PluggyBankSyncAdapter;
   if (input.provider === 'MOCK') {
-    if (db.mode !== 'local' && process.env.SEED_DEMO_DATA !== 'true')
-      throw new HttpError(400, 'Sincronização simulada desativada nesta base real.');
     adapter = new MockBankSyncAdapter();
   } else {
     const encrypted = state.users.find((u) => u.slug === actor)?.encryptedPluggyCredentials;
@@ -210,7 +230,12 @@ export async function syncBank(token: string | undefined, raw: unknown) {
           now: Date.now(),
           requestId: randomUUID(),
         });
-  await db.execute({ kind: 'syncTime', actor, provider: input.provider, now: Date.now() });
+  await db.execute({
+    kind: 'syncTime',
+    actor,
+    provider: input.provider,
+    now: Date.now(),
+  });
   return {
     ok: true,
     imported: result.imported,

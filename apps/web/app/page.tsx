@@ -18,15 +18,29 @@ import { Donut, Empty, Icon, Money, Panel, Progress, Trend } from '../components
 const tabs = [
   { id: 'overview', name: 'Visão Geral', short: 'Início', icon: 'overview' },
   { id: 'couple', name: 'Casal & Divisão', short: 'Casal', icon: 'couple' },
-  { id: 'wealth', name: 'Patrimônio & Invest', short: 'Patrimônio', icon: 'wealth' },
+  {
+    id: 'wealth',
+    name: 'Patrimônio & Invest',
+    short: 'Patrimônio',
+    icon: 'wealth',
+  },
   { id: 'cards', name: 'Cartões & Cashback', short: 'Cartões', icon: 'cards' },
-  { id: 'ledger', name: 'Extrato & Conciliação', short: 'Extrato', icon: 'ledger' },
+  {
+    id: 'ledger',
+    name: 'Extrato & Conciliação',
+    short: 'Extrato',
+    icon: 'ledger',
+  },
 ] as const;
 type Tab = (typeof tabs)[number]['id'];
 const scopeName = (scope: string) =>
   scope === 'CAS' ? 'Cassiano' : scope === 'KET' ? 'Kethellen' : 'Casal';
 const dateLabel = (date: string) =>
-  new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', timeZone: 'UTC' })
+  new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: 'short',
+    timeZone: 'UTC',
+  })
     .format(new Date(date + 'T12:00:00Z'))
     .replace('.', '');
 function Brand({ light = false }: { light?: boolean }) {
@@ -205,6 +219,7 @@ export default function Home() {
     const expired = () => {
       setUser(null);
       setData(null);
+      setNotice('');
       setModal(null);
       setConfirmation(null);
       setView('INDIVIDUAL');
@@ -251,6 +266,7 @@ export default function Home() {
       await api('auth/logout', {});
       setUser(null);
       setData(null);
+      setNotice('');
       setSettings(false);
       setModal(null);
       setConfirmation(null);
@@ -275,10 +291,11 @@ export default function Home() {
     }
     setBusy(true);
     try {
-      const result = await api<{ imported: number; duplicates: number; notice?: string }>(
-        'bank/sync',
-        { provider, accountId: account?.id },
-      );
+      const result = await api<{
+        imported: number;
+        duplicates: number;
+        notice?: string;
+      }>('bank/sync', { provider, accountId: account?.id });
       await saved(
         `${result.imported} lançamentos para revisar; ${result.duplicates} já existentes.${result.notice ? ' ' + result.notice : ''}`,
       );
@@ -313,7 +330,9 @@ export default function Home() {
     const csv = '\uFEFF' + rows.map((row) => row.map(escape).join(';')).join('\r\n');
     const filename = `entre-contas-${view.toLowerCase()}-${month}.csv`;
     const bridge = (
-      window as unknown as { ReactNativeWebView?: { postMessage: (value: string) => void } }
+      window as unknown as {
+        ReactNativeWebView?: { postMessage: (value: string) => void };
+      }
     ).ReactNativeWebView;
     if (bridge) {
       bridge.postMessage(JSON.stringify({ type: 'export-csv', csv, filename }));
@@ -335,7 +354,8 @@ export default function Home() {
         <p>Preparando seu espaço…</p>
       </main>
     );
-  if (!user) return <Login onLogin={setUser} />;
+  if (!user)
+    return <Login onLogin={(nextUser) => { setNotice(''); setError(''); setUser(nextUser); }} />;
   const monthTitle = new Intl.DateTimeFormat('pt-BR', {
     month: 'long',
     year: 'numeric',
@@ -496,7 +516,7 @@ export default function Home() {
                   key={v}
                   className={view === v ? 'selected' : ''}
                   onClick={() => {
-                    setData(null);
+                    if (view !== v) setData(null);
                     setView(v);
                   }}
                   aria-pressed={view === v}
@@ -553,8 +573,11 @@ export default function Home() {
           {data?.mode === 'local' && (
             <div className="demo-banner">
               <span className="status-dot" />
-              <strong>Ambiente de teste</strong>
-              <span>Dados demonstrativos e alterações salvas somente nesta instalação.</span>
+              <strong>{data.demoEnabled ? 'Demonstração' : 'Ambiente local'}</strong>
+              <span>
+                {data.demoEnabled ? 'Dados demonstrativos. ' : ''}Alterações salvas somente nesta
+                instalação.
+              </span>
             </div>
           )}
           {error && (
@@ -816,7 +839,11 @@ export default function Home() {
   );
 }
 
-type SharedProps = { data: Snapshot; hidden: boolean; open: (kind: FormKind, id?: string) => void };
+type SharedProps = {
+  data: Snapshot;
+  hidden: boolean;
+  open: (kind: FormKind, id?: string) => void;
+};
 type TransactionProps = SharedProps & {
   limit?: number;
   busy: boolean;
@@ -1598,7 +1625,7 @@ function Wealth({ data, hidden, open }: SharedProps) {
               </button>
             }
           >
-            Cadastre uma posição real ou use os valores de teste.
+            Cadastre uma posição com os valores do seu extrato.
           </Empty>
         )}
         <p className="panel-footnote">
@@ -1840,7 +1867,7 @@ function Settings({
                 </button>
               )}
             </div>
-            {data.mode === 'local' && (
+            {data.demoEnabled && (
               <div className="mock-sync">
                 <small>Teste o fluxo sem conectar um banco real.</small>
                 <button className="text-button" disabled={busy} onClick={() => void sync('MOCK')}>
@@ -1919,7 +1946,10 @@ function Settings({
 }
 
 function CdiSimulation({ hidden }: { hidden: boolean }) {
-  const [result, setResult] = useState<{ principal: number; projected: number } | null>(null),
+  const [result, setResult] = useState<{
+      principal: number;
+      projected: number;
+    } | null>(null),
     [error, setError] = useState('');
   function calculate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

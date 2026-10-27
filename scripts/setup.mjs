@@ -64,7 +64,7 @@ if (process.argv.includes('--stdin')) {
 }
 const vars = {
   DATABASE_MODE: 'local',
-  SEED_DEMO_DATA: 'true',
+  SEED_DEMO_DATA: 'false',
   APP_ORIGIN: 'http://localhost:3000',
   JWT_SECRET: randomBytes(32).toString('hex'),
   ENCRYPTION_KEY: randomBytes(32).toString('hex'),

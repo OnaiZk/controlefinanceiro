@@ -137,3 +137,24 @@ O usuário pediu criar o sistema completo, autorizando a sequência das fases, e
 - **Ambiente e evidências:** pnpm ausente e instalação limpa bloqueada pelo proxy; scripts equivalentes npm passaram usando dependências locais ignoradas. Sem lockfile de instalação limpa. Git remoto bloqueado pelo proxy e escrita de `.git/config` negada; não houve commit/push. Resultados completos, limitações e roteiro estão em [QA.md](QA.md).
 
 As fontes acima foram consultadas nesta sessão em 2026-10-25. Nenhum plano pago, cartão, API paga, publicação em loja ou mensagem a terceiros foi ativado.
+
+## 9. Preparação para uso real — 2026-10-26
+
+- O usuário autorizou instalação reproduzível, limpeza dos dados fictícios e verificação dos botões. Netlify e teste em celulares serão executados pelo usuário depois da preparação e da chave Convex.
+- Setup e ambientes novos começam vazios (`SEED_DEMO_DATA=false`). Os mocks seguem disponíveis para desenvolvimento isolado, mas a API recusa sincronização simulada em qualquer base com demonstração desligada. Arquivos de exemplo e fixtures não são dados iniciais de uso.
+- A limpeza local reconhece somente identificadores do seed e recusa registros manuais ou conexões reais. Antes de substituir o arquivo, preserva e verifica cópia cifrada. Os dois acessos e as categorias são mantidos; nenhuma base remota é limpa por esse procedimento.
+- pnpm fixado em 10.30.0 e `pnpm-lock.yaml` gerado. Netlify passa a exigir `--frozen-lockfile`. A ferramenta Playwright Core é dependência de desenvolvimento gratuita e usa Chrome/Edge já instalado, sem serviço externo nem cobrança. Resultados da instalação limpa e dos testes estão em `docs/QA.md`.
+- Orientação da chave conferida em 2026-10-26: Settings → General → Deploy keys no deployment de produção. O script requer `deployment:deploy`, `deployment:env:view` e `deployment:env:write`, pois também configura a variável da ponte. Fontes: [deploy keys](https://docs.convex.dev/cli/deploy-key-types), [settings](https://docs.convex.dev/dashboard/deployments/deployment-settings) e [permissões](https://docs.convex.dev/team-management/role-actions). A URL de produção pode diferir da URL de desenvolvimento já recebida.
+
+## 10. Certificados do CLI Convex — 2026-10-26
+
+- O deploy inicia o CLI com `--use-system-ca`, somando as CAs confiáveis do sistema às do Node sem desativar a validação TLS. Preserva `NODE_EXTRA_CA_CERTS` quando uma CA oficial da rede precisa ser fornecida em PEM. Nenhuma dependência ou serviço adicional.
+- A hipótese é que a cadeia apresentada pela rede depende de uma CA confiável no Windows. Uma requisição de leitura a `https://api.convex.dev` com `--use-system-ca` e validação TLS obrigatória retornou HTTP 200 nesta sessão. Isso valida a conexão, não a publicação ou as permissões da deploy key.
+- Fonte: [Node.js — redes corporativas](https://nodejs.org/en/learn/http/enterprise-network-configuration), consultada em 2026-10-26.
+
+## 11. Índice de sessões e destino do deploy — 2026-10-26
+
+- O primeiro deploy real identificou `IndexNameReserved`: o índice `sessions.by_id` usava nome reservado pelo Convex. Renomeado para `by_session_id`, mantendo o campo `id` e os documentos. Não havia consultas por esse índice para atualizar. O teste da exportação do schema verifica nomes reservados, campos de sistema e duplicação de campos nos índices declarados.
+- A chave configurada nesta verificação é de desenvolvimento (`dev`), apontando para `neat-perch-479`. Repetir esse destino concretiza a tentativa relatada pelo usuário; não equivale a publicar Production. O uso definitivo no Netlify deve apontar para o deployment Production e sua própria chave de publicação, sem habilitar plano pago.
+- Fontes oficiais consultadas em 2026-10-26: [limites e nomes de índices](https://docs.convex.dev/database/reading-data/indexes/), [seleção do destino pelo CLI](https://docs.convex.dev/cli/reference/deploy). A validação local não substitui a avaliação do schema no serviço hospedado.
+- Verificação concluída: `pnpm lint`, `pnpm typecheck` e 85 testes aprovados; `npm run convex:deploy` concluiu com schema validado e funções publicadas em `neat-perch-479` (Development). Leitura remota autenticada aprovada e acesso com segredo incorreto recusado. Nenhum registro financeiro criado ou removido pela verificação. TLS permaneceu validado com as CAs do sistema; Production e Netlify continuam pendentes.
